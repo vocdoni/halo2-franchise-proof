@@ -1,0 +1,28 @@
+[package]
+name = "halo2-franchise"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+halo2_zcash = { package="halo2", git = "https://github.com/zcash/halo2", rev ="f358f7289999b202950406cdeac2ba66cd266132", features=["dev-graph"], optional = true }
+halo2_adria0 = { package="halo2", git = "https://github.com/adria0/halo2", branch="norayon", features=["dev-graph"], optional=true  } 
+
+plotters = "0.3"
+pasta_curves = "0.2.1"
+ff = "0.11"
+
+bigint = "4.4"
+bitvec = "0.22"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[features]
+default = [ "halo2_zcash" ]
+wasm = ["halo2_adria0"]
+
+[[bench]]
+name = "franchise"
+harness = false
