@@ -1,10 +1,10 @@
 use std::{array, convert::TryInto, ops::Range};
 
-use ff::PrimeFieldBits;
 use crate::halo2::{
     circuit::{Cell, Layouter, Region},
     plonk::{Advice, Column, Error, Expression},
 };
+use ff::PrimeFieldBits;
 use pasta_curves::arithmetic::FieldExt;
 
 pub(crate) mod cond_swap;
@@ -136,14 +136,14 @@ pub fn range_check<F: FieldExt>(word: Expression<F>, range: usize) -> Expression
 
 #[cfg(test)]
 mod tests {
-    use bigint::U256;
-    use ff::PrimeField;
     use crate::halo2::{
         circuit::{Layouter, SimpleFloorPlanner},
         dev::{MockProver, VerifyFailure},
         plonk::{Circuit, ConstraintSystem, Error, Selector},
         poly::Rotation,
     };
+    use bigint::U256;
+    use ff::PrimeField;
     use pasta_curves::pallas;
 
     use super::*;

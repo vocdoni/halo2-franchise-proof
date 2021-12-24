@@ -7,12 +7,17 @@ use crate::{
     primitives::poseidon::{self, ConstantLength, P128Pow5T3},
 };
 
+pub struct MerkleTreeBuilder {
+    depth: u32,
+    nodes: Vec<Fp>,
+}
+
 pub struct MerkleTree {
     depth: u32,
     nodes: Vec<Fp>,
 }
 
-impl MerkleTree {
+impl MerkleTreeBuilder {
     pub fn new(depth: u32) -> Self {
         let size = 2usize.pow(depth - 1);
         Self {
@@ -30,22 +35,27 @@ impl MerkleTree {
         poseidon::Hash::init(P128Pow5T3, ConstantLength::<2>).hash([first, second])
     }
 
-    pub fn calc(&mut self) {
+    pub fn build(self) -> MerkleTree {
+        let MerkleTreeBuilder { depth, mut nodes } = self;
+
         // fill with zeroes the unused leafs
         let size = 2usize.pow(self.depth - 1);
-        if self.nodes.len() < size {
-            self.nodes.resize(size, Fp::zero());
+        if nodes.len() < size {
+            nodes.resize(size, Fp::zero());
         }
 
         // compute the merkle tree nodes
         let mut i = 0;
-        while i < self.nodes.capacity() - 1 {
-            self.nodes
-                .push(Self::hash(self.nodes[i], self.nodes[i + 1]));
+        while i < nodes.capacity() - 1 {
+            nodes.push(Self::hash(nodes[i], nodes[i + 1]));
             i += 2;
         }
-    }
 
+        MerkleTree { depth, nodes }
+    }
+}
+
+impl MerkleTree {
     pub fn print_tree(&self) {
         let mut pos = (self.nodes.len() - 1) as isize;
         let mut lvl = 1;
@@ -54,7 +64,7 @@ impl MerkleTree {
                 let s = format!("{:?}", self.nodes[(pos + l) as usize]);
                 print!("{} ", &s[60..66]);
             }
-            println!("");
+            println!();
             pos -= lvl * 2;
             lvl *= 2;
         }
@@ -86,9 +96,9 @@ impl MerkleTree {
         let mut hash = value;
         for (value, order) in siblings {
             hash = if order {
-                Self::hash(hash, value)
+                MerkleTreeBuilder::hash(hash, value)
             } else {
-                Self::hash(value, hash)
+                MerkleTreeBuilder::hash(value, hash)
             };
         }
         hash == root
@@ -155,16 +165,16 @@ pub fn generate_test_data<const LVL: usize>() -> (FranchiseCircuit<LVL>, Vec<Fp>
 }
 
 pub fn secret_to_public_key(secret_key: Fp) -> Fp {
-    poseidon::Hash::init(P128Pow5T3, ConstantLength::<2>).hash([secret_key, secret_key])
+    poseidon::Hash::init(P128Pow5T3, ConstantLength::<2>).hash([Fp::one(), secret_key])
 }
 
 #[test]
 fn simple_mt_test() {
-    let mut tree = MerkleTree::new(6);
+    let mut tree = MerkleTreeBuilder::new(6);
     for n in 0..2u64.pow(tree.depth - 1) {
         tree.insert(Fp::from(n));
     }
-    tree.calc();
+    let tree = tree.build();
     tree.print_tree();
     for n in 0..2usize.pow(tree.depth - 1) {
         let witness = tree.witness(n);

@@ -139,8 +139,8 @@ impl<F: FieldExt> CondSwapChip<F> {
         // Only column a is used in an equality constraint directly by this chip.
         let q_swap = meta.selector();
 
-        meta.enable_equality(advices[0].clone().into());
-        meta.enable_equality(advices[1].clone().into());
+        meta.enable_equality(advices[0].into());
+        meta.enable_equality(advices[1].into());
         let config = CondSwapConfig {
             q_swap,
             a: advices[0],

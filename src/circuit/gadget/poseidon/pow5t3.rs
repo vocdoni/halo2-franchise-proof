@@ -614,7 +614,6 @@ impl<F: FieldExt> Pow5T3State<F> {
 
 #[cfg(test)]
 mod tests {
-    use ff::PrimeField;
     use crate::halo2::{
         arithmetic::FieldExt,
         circuit::{Layouter, SimpleFloorPlanner},
@@ -622,6 +621,7 @@ mod tests {
         pasta::Fp,
         plonk::{Circuit, ConstraintSystem, Error},
     };
+    use ff::PrimeField;
     use pasta_curves::pallas;
 
     use super::{PoseidonInstructions, Pow5T3Chip, Pow5T3Config, StateWord, WIDTH};

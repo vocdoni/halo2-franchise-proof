@@ -2,8 +2,8 @@
 
 use std::marker::PhantomData;
 
-use bitvec::prelude::*;
 use crate::halo2::arithmetic::FieldExt;
+use bitvec::prelude::*;
 
 const STATE: usize = 80;
 

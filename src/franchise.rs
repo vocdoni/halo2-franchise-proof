@@ -13,25 +13,6 @@ use crate::circuit::gadget::utilities::cond_swap::{
 use crate::circuit::gadget::utilities::{CellValue, Var};
 use crate::primitives::poseidon::{ConstantLength, P128Pow5T3};
 
-/*
-                       +----------+
-                       |          |
-PUB_censusRoot+------->+          |(key)<-----+PRI_index
-                       |          |
-                       | SMT      |            +----------+
-                       | Verifier |            |          |
-PRI_siblings+--------->+          |(value)<----+ Poseidon +<-----+--+PRI_secretKey
-                       |          |            |          |      |
-                       +----------+            +----------+      |
-                                                                 |
-                                     +----------+                |
-                      +----+         |          +<---------------+
-PUB_nullifier+------->+ == +<--------+ Poseidon |<-----------+PUB_processID_0
-                      +----+         |          +<-----------+PUB_processID_1
-                                     +----------+
-PUB_voteHash
-*/
-
 #[derive(Clone, Default)]
 pub struct FranchiseCircuit<const LVL: usize> {
     pub pri_index: Option<[bool; LVL]>,
@@ -101,10 +82,35 @@ impl<const LVL: usize> FranchiseCircuit<LVL> {
                 self.pri_index.map(|v| v[n]),
             )?;
 
-            root = self.hash(&config, layouter.namespace(|| "mt hash"), [left, right])?;
+            root = self.hash(config, layouter.namespace(|| "mt hash"), [left, right])?;
         }
 
         Ok(root)
+    }
+
+    fn load_constant(
+        &self,
+        config: &FranchiseConfig,
+        mut layouter: impl Layouter<Fp>,
+        constant: Fp,
+    ) -> Result<CellValue<Fp>, Error> {
+        let mut num = None;
+
+        layouter.assign_region(
+            || "load constant",
+            |mut region| {
+                let cell = region.assign_advice_from_constant(
+                    || "constant value",
+                    config.swap.a, // column
+                    0,             // offset
+                    constant,      // value
+                )?;
+                num = Some(CellValue::new(cell, Some(constant)));
+
+                Ok(())
+            },
+        )?;
+        Ok(num.unwrap())
     }
 
     fn load_private_input(
@@ -117,7 +123,7 @@ impl<const LVL: usize> FranchiseCircuit<LVL> {
             || "load private input",
             |mut region| {
                 let cell = region.assign_advice(
-                    || format!("load leafs"),
+                    || String::from("load private"),
                     column,
                     0,
                     || value.ok_or(Error::Synthesis),
@@ -188,6 +194,8 @@ impl<const LVL: usize> Circuit<Fp> for FranchiseCircuit<LVL> {
         config: Self::Config,
         mut layouter: impl Layouter<Fp>,
     ) -> Result<(), Error> {
+        let one = self.load_constant(&config, layouter.namespace(|| "load ONE"), Fp::one())?;
+
         let process_id_0 = self.load_private_input(
             layouter.namespace(|| "load process_id[0]"),
             config.swap.a,
@@ -215,7 +223,7 @@ impl<const LVL: usize> Circuit<Fp> for FranchiseCircuit<LVL> {
         let public_key = self.hash(
             &config,
             layouter.namespace(|| "hash secret key"),
-            [secret_key, secret_key],
+            [one, secret_key],
         )?;
 
         let process_id_hash = self.hash(
