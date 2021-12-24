@@ -1,3 +1,5 @@
+[![Rust build](https://github.com/vocdoni/halo2-franchise-proof/actions/workflows/rust.yml/badge.svg)](https://github.com/vocdoni/halo2-franchise-proof/actions/workflows/rust.yml)
+
 # halo2-franchise-proof
 
 This is an experimental port of the Vocdoni voting anonymizer zk circuit (see [current implementation](https://https://github.com/vocdoni/zk-franchise-proof-circuit) using [Groth16](http://www.zeroknowledgeblog.com/index.php/groth16)/[circom](https://github.com/iden3/circom)) to the [ZCash Halo2](https://zcash.github.io/halo2) proving system that do not have trusted setup.
