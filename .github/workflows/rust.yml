@@ -1,4 +1,4 @@
-name: Check on every push
+name: Rust build
 
 on: [push, pull_request]
 
